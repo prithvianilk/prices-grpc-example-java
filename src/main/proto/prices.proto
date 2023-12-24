@@ -1,0 +1,21 @@
+syntax = "proto2";
+option java_package = "com.prithvianilk.prices";
+
+import "google/protobuf/empty.proto";
+
+message GetPriceRequest {
+  required string id = 1;
+}
+
+message Price {
+  required string id = 1;
+  required int64 value = 2;
+}
+
+service PriceService {
+  rpc GetPrice(GetPriceRequest) returns (Price) {}
+
+  rpc GetPrices(google.protobuf.Empty) returns (stream Price) {}
+
+  rpc AddPrices(stream Price) returns (google.protobuf.Empty) {}
+}
