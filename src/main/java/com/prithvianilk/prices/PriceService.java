@@ -1,12 +1,8 @@
 package com.prithvianilk.prices;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.Empty;
-import com.google.rpc.ErrorInfo;
 import com.google.rpc.Status;
-import io.grpc.Metadata;
 import io.grpc.StatusRuntimeException;
-import io.grpc.protobuf.ProtoUtils;
 import io.grpc.protobuf.StatusProto;
 import io.grpc.stub.StreamObserver;
 
@@ -79,7 +75,7 @@ public class PriceService extends PriceServiceGrpc.PriceServiceImplBase {
 
     private static void sleep() {
         try {
-            Thread.sleep(Duration.of(3, ChronoUnit.SECONDS));
+            Thread.sleep(Duration.of(1, ChronoUnit.SECONDS));
         } catch (InterruptedException e) {
             throw new InternalServerError(e);
         }
@@ -115,9 +111,6 @@ public class PriceService extends PriceServiceGrpc.PriceServiceImplBase {
 
     private static long getRandomPrice() {
         return RandomGenerator.getDefault().nextLong(1, 100);
-    }
-
-    public static class PriceNotFoundException extends RuntimeException {
     }
 
     public static class InternalServerError extends RuntimeException {
