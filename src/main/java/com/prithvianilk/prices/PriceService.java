@@ -1,6 +1,13 @@
 package com.prithvianilk.prices;
 
+import com.google.protobuf.Any;
 import com.google.protobuf.Empty;
+import com.google.rpc.ErrorInfo;
+import com.google.rpc.Status;
+import io.grpc.Metadata;
+import io.grpc.StatusRuntimeException;
+import io.grpc.protobuf.ProtoUtils;
+import io.grpc.protobuf.StatusProto;
 import io.grpc.stub.StreamObserver;
 
 import java.time.Duration;
@@ -11,7 +18,19 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.random.RandomGenerator;
 
+import static com.google.rpc.Code.NOT_FOUND;
+
 public class PriceService extends PriceServiceGrpc.PriceServiceImplBase {
+    private static final StatusRuntimeException PRICE_NOT_FOUND_EXCEPTION = getPriceNotFoundException();
+
+    private static StatusRuntimeException getPriceNotFoundException() {
+        Status status = Status.newBuilder()
+                .setCode(NOT_FOUND.getNumber())
+                .setMessage("Price not found")
+                .build();
+        return StatusProto.toStatusRuntimeException(status);
+    }
+
     private final Map<String, Long> idToPriceMap;
 
     public PriceService() {
@@ -30,11 +49,10 @@ public class PriceService extends PriceServiceGrpc.PriceServiceImplBase {
         Long value = idToPriceMap.get(request.getId());
 
         if (Objects.isNull(value)) {
-            var ex = new PriceNotFoundException();
-            responseObserver.onError(ex);
-            throw ex;
+            System.out.printf("Failed to find price for id: %s\n", request.getId());
+            responseObserver.onError(PRICE_NOT_FOUND_EXCEPTION);
+            return;
         }
-
 
         var price = Prices.Price
                 .newBuilder()
@@ -80,7 +98,7 @@ public class PriceService extends PriceServiceGrpc.PriceServiceImplBase {
         return new StreamObserver<>() {
             @Override
             public void onNext(Prices.Price value) {
-                System.out.println("Received: " + value);
+                System.out.printf("Received: %s\n", value);
                 idToPriceMap.put(value.getId(), value.getValue());
             }
 

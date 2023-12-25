@@ -9,7 +9,7 @@ public class PriceServer {
     private final Server server;
 
     public PriceServer(int port) {
-        this.server = ServerBuilder
+        server = ServerBuilder
                 .forPort(port)
                 .addService(new PriceService())
                 .build();

@@ -3,6 +3,8 @@ package com.prithvianilk.prices;
 import com.google.protobuf.Empty;
 import io.grpc.Channel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status.Code;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 
 import java.time.Duration;
@@ -13,9 +15,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.random.RandomGenerator;
 
 public class Main {
-    private static final String host = "localhost";
+    private static final String HOST = "localhost";
 
-    private static final int port = 3000;
+    private static final int PORT = 3000;
 
     private static PriceServiceGrpc.PriceServiceStub stub;
 
@@ -31,19 +33,19 @@ public class Main {
         streamAllPricesFromServer();
     }
 
+    private static void startServer() {
+        Thread.ofVirtual().start(() -> new PriceServer(Main.PORT).start());
+    }
+
     private static void initStubs() {
         Channel channel = ManagedChannelBuilder
-                .forAddress(host, port)
+                .forAddress(HOST, PORT)
                 .usePlaintext()
                 .build();
 
         stub = PriceServiceGrpc.newStub(channel);
         blockingStub = PriceServiceGrpc.newBlockingStub(channel);
         asyncStub = PriceServiceGrpc.newFutureStub(channel);
-    }
-
-    private static void startServer() {
-        Thread.ofVirtual().start(() -> new PriceServer(Main.port).start());
     }
 
     private static void getEachPricePriceIndividually() {
@@ -64,9 +66,12 @@ public class Main {
     private static void getAndPrintPrice(PriceServiceGrpc.PriceServiceBlockingStub blockingStub, String id) {
         try {
             System.out.println((blockingStub.getPrice(getPriceRequest(id))));
-        } catch (Exception e) {
-            System.out.println("Failed to get price: " + e.getMessage());
-            System.out.println();
+        } catch (StatusRuntimeException e) {
+            Code code = e.getStatus().getCode();
+            switch (code) {
+                case NOT_FOUND -> System.out.println(e.getStatus().getDescription());
+                default -> System.out.println("Unknown error code: " + code + ", " + e.getMessage());
+            }
         }
     }
 
